@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajwa oil Mills Employee Attendance Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'SolaimanLipi', Arial, sans-serif; }
+        .sidebar { background: #198754; color: white; min-height: 100vh; padding: 20px; }
+        .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 15px; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #145c35; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Menu -->
+            <div class="col-md-3 sidebar">
+                <h4 class="text-center mb-4">🌱 আজোয়া অয়েল মিলস</h4>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">মাস সিলেক্ট করুন:</label>
+                    <input type="month" id="currentMonth" class="form-control" onchange="loadAppData()">
+                </div>
+                <hr>
+                <a href="#" onclick="switchTab('attendance')" class="active" id="tab-attendance">📊 হাজিরা প্যানেল</a>
+                <a href="#" onclick="switchTab('leave-form')" id="tab-leave-form">📝 ছুটির আবেদন ফরম</a>
+                <a href="#" onclick="switchTab('total-leave')" id="tab-total-leave">🏖️ মোট ছুটি</a>
+                <a href="#" onclick="switchTab('total-present')" id="tab-total-present">✅ মোট উপস্থিতি</a>
+                <a href="#" onclick="switchTab('total-absent')" id="tab-total-absent">❌ অনুপস্থিতি</a>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-md-9 p-4">
+                <h2 class="mb-4 text-success">Employee Attendance Tracker</h2>
+                
+                <!-- Attendance Panel -->
+                <div id="section-attendance" class="content-section">
+                    <div class="card p-4 mb-4">
+                        <h4 class="mb-3">কর্মী ও মোবাইল নম্বর ব্যবস্থাপনা</h4>
+                        <div class="input-group mb-3">
+                            <input type="text" id="newEmpName" class="form-control" placeholder="নতুন কর্মীর নাম লিখুন">
+                            <input type="text" id="newEmpMobile" class="form-control" placeholder="মোবাইল নম্বর">
+                            <button class="btn btn-success" onclick="addNewEmployee()">কর্মী যোগ করুন</button>
+                        </div>
+                    </div>
+
+                    <div class="card p-4">
+                        <h4 class="mb-3">দৈনিক হাজিরা ও ওভারটাইম প্যানেল</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>কর্মীর নাম</th>
+                                        <th>মোবাইল নম্বর</th>
+                                        <th>সকাল শিফট (ওটি: ইন/আউট, বিল)</th>
+                                        <th>ইভিনিং শিফট (জেনারেল ডিউটি: P/A/L)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceTableBody">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="saveAttendanceData()">ডাটা সেভ করুন</button>
+                    </div>
+                </div>
+
+                <!-- Leave Application Form -->
+                <div id="section-leave-form" class="content-section" style="display:none;">
+                    <div class="card p-4">
+                        <h4 class="mb-3">ছুটির জন্য আবেদন ফরম</h4>
+                        <form id="leaveForm" onsubmit="submitLeaveForm(event)">
+                            <div class="mb-3">
+                                <label class="form-label">নাম:</label>
+                                <select id="leaveName" class="form-control" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">মোবাইল নম্বর:</label>
+                                <input type="text" id="leaveMobile" class="form-control" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">ছুটি শুরুর তারিখ:</label>
+                                    <input type="date" id="leaveStart" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">ছুটি শেষ হবার তারিখ:</label>
+                                    <input type="date" id="leaveEnd" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ছুটি নেওয়ার কারণ:</label>
+                                <textarea id="leaveReason" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ছুটি চলাকালীন কোথায় অবস্থান করবেন:</label>
+                                <input type="text" id="leaveLocation" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">আবেদনকারীর স্বাক্ষর:</label>
+                                <input type="text" id="leaveSign" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">কর্তৃপক্ষের অনুমোদন:</label>
+                                <select id="leaveApproval" class="form-control">
+                                    <option value="Pending">অপেক্ষমাণ (Pending)</option>
+                                    <option value="Approved">অনুমোদিত (Approved)</option>
+                                    <option value="Rejected">প্রত্যাখ্যাত (Rejected)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success">আবেদন সাবমিট করুন ও হোয়াটসঅ্যাপে শেয়ার করুন</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Summary Sections -->
+                <div id="section-total-leave" class="content-section" style="display:none;">
+                    <div class="card p-4"><h4>মোট ছুটি (Summary)</h4><div id="summaryLeave"></div></div>
+                </div>
+                <div id="section-total-present" class="content-section" style="display:none;">
+                    <div class="card p-4"><h4>মোট উপস্থিতি (Summary)</h4><div id="summaryPresent"></div></div>
+                </div>
+                <div id="section-total-absent" class="content-section" style="display:none;">
+                    <div class="card p-4"><h4>অনুপস্থিতি (Summary)</h4><div id="summaryAbsent"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let appData = { employees: [], records: {}, leaves: [] };
+
+        document.getElementById('currentMonth').value = new Date().toISOString().slice(0, 7);
+
+        async function loadAppData() {
+            let res = await fetch('/api/data');
+            appData = await res.json();
+            renderUI();
+        }
+
+        async function saveDataToServer(action, payload) {
+            let res = await fetch('/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, ...payload })
+            });
+            appData = await res.json();
+            renderUI();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.content-section').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
+            document.getElementById('section-' + tabId).style.display = 'block';
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if(tabId !== 'attendance') renderSummaries(tabId);
+        }
+
+        function renderUI() {
+            let tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '';
+            let month = document.getElementById('currentMonth').value;
+            let monthRecords = (appData.records && appData.records[month]) || {};
+
+            appData.employees.forEach((emp, index) => {
+                let empRec = monthRecords[emp.name] || { ot_in: '', ot_out: '', status: 'P' };
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${emp.name}</strong></td>
+                    <td><input type="text" class="form-control form-control-sm" value="${emp.mobile || ''}" onchange="updateMobile(${index}, this.value)"></td>
+                    <td>
+                        <div class="input-group input-group-sm mb-1">
+                            <span class="input-group-text">ইন-আউট</span>
+                            <input type="time" class="form-control" value="${empRec.ot_in || ''}" onchange="updateRec('${emp.name}', 'ot_in', this.value)">
+                            <input type="time" class="form-control" value="${empRec.ot_out || ''}" onchange="updateRec('${emp.name}', 'ot_out', this.value)">
+                        </div>
+                        <small class="text-muted">ওটি বিল: <span id="bill-${index}">৳${empRec.ot_bill || 0}</span></small>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" onchange="updateRec('${emp.name}', 'status', this.value)">
+                            <option value="P" ${empRec.status === 'P' ? 'selected' : ''}>P (উপস্থিত)</option>
+                            <option value="A" ${empRec.status === 'A' ? 'selected' : ''}>A (অনুপস্থিত)</option>
+                            <option value="L" ${empRec.status === 'L' ? 'selected' : ''}>L (ছুটি)</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Populate leave dropdown
+            let leaveSelect = document.getElementById('leaveName');
+            leaveSelect.innerHTML = '';
+            appData.employees.forEach(emp => {
+                leaveSelect.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
+            });
+        }
+
+        function updateMobile(index, val) {
+            appData.employees[index].mobile = val;
+            saveDataToServer('update_employees', { employees: appData.employees });
+        }
+
+        function updateRec(name, field, val) {
+            let month = document.getElementById('currentMonth').value;
+            if(!appData.records[month]) appData.records[month] = {};
+            if(!appData.records[month][name]) appData.records[month][name] = { ot_in: '', ot_out: '', status: 'P', ot_bill: 0 };
+            
+            appData.records[month][name][field] = val;
+
+            // Calculate OT Bill if times change
+            let rec = appData.records[month][name];
+            if(rec.ot_in && rec.ot_out) {
+                let [h1, m1] = rec.ot_in.split(':').map(Number);
+                let [h2, m2] = rec.ot_out.split(':').map(Number);
+                let hours = (h2 + m2/60) - (h1 + m1/60);
+                if(hours > 0) {
+                    rec.ot_bill = Math.round(hours * 50);
+                } else {
+                    rec.ot_bill = 0;
+                }
+            }
+        }
+
+        function saveAttendanceData() {
+            let month = document.getElementById('currentMonth').value;
+            saveDataToServer('save_attendance', { month, records: appData.records[month] || {} });
+            alert('সফলভাবে ডাটা সেভ হয়েছে!');
+        }
+
+        function addNewEmployee() {
+            let name = document.getElementById('newEmpName').value.trim();
+            let mobile = document.getElementById('newEmpMobile').value.trim();
+            if(name) {
+                appData.employees.push({ name, mobile });
+                document.getElementById('newEmpName').value = '';
+                document.getElementById('newEmpMobile').value = '';
+                saveDataToServer('update_employees', { employees: appData.employees });
+            }
+        }
+
+        function submitLeaveForm(e) {
+            e.preventDefault();
+            let leave = {
+                name: document.getElementById('leaveName').value,
+                mobile: document.getElementById('leaveMobile').value,
+                start: document.getElementById('leaveStart').value,
+                end: document.getElementById('leaveEnd').value,
+                reason: document.getElementById('leaveReason').value,
+                location: document.getElementById('leaveLocation').value,
+                sign: document.getElementById('leaveSign').value,
+                approval: document.getElementById('leaveApproval').value
+            };
+            
+            saveDataToServer('save_leave', { leave });
+
+            let text = `📝 *ছুটির আবেদন ফরম* - আজোয়া অয়েল মিলস\n` +
+                       `নাম: ${leave.name}\nমোবাইল: ${leave.mobile}\n` +
+                       `তারিখ: ${leave.start} হতে ${leave.end}\nকারণ: ${leave.reason}\n` +
+                       `অবস্থান: ${leave.location}\nঅনুমোদন: ${leave.approval}`;
+            
+            let whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function renderSummaries(type) {
+            let month = document.getElementById('currentMonth').value;
+            let monthRecords = (appData.records && appData.records[month]) || {};
+            let html = '<ul class="list-group">';
+            
+            appData.employees.forEach(emp => {
+                let rec = monthRecords[emp.name] || { status: 'P', ot_bill: 0 };
+                if(type === 'total-leave' && rec.status === 'L') {
+                    html += `<li class="list-group-item">${emp.name} - ছুটি (L)</li>`;
+                } else if(type === 'total-present' && rec.status === 'P') {
+                    html += `<li class="list-group-item">${emp.name} - উপস্থিত (P) [ওটি বিল: ৳${rec.ot_bill || 0}]</li>`;
+                } else if(type === 'total-absent' && rec.status === 'A') {
+                    html += `<li class="list-group-item">${emp.name} - অনুপস্থিত (A)</li>`;
+                }
+            });
+            html += '</ul>';
+            
+            if(type === 'total-leave') document.getElementById('summaryLeave').innerHTML = html;
+            if(type === 'total-present') document.getElementById('summaryPresent').innerHTML = html;
+            if(type === 'total-absent') document.getElementById('summaryAbsent').innerHTML = html;
+        }
+
+        loadAppData();
+    </script>
+</body>
+</html>
