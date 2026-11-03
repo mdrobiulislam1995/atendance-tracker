@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajwa oil Mills Employee Attendance Tracker</title>
+    <title>Ajwa Oil Mills Employee Attendance Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- PWA Setup & Manifest -->
@@ -17,10 +17,13 @@
 
     <style>
         body { background-color: #f8f9fa; font-family: 'SolaimanLipi', Arial, sans-serif; }
-        .sidebar { background: #198754; color: white; min-height: 100vh; padding: 20px; }
-        .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 15px; border-radius: 5px; margin-bottom: 5px; }
-        .sidebar a:hover, .sidebar a.active { background: #145c35; }
-        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .sidebar { background: #198754; color: white; padding: 20px; min-height: auto; }
+        @media (min-width: 768px) {
+            .sidebar { min-height: 100vh; }
+        }
+        .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 15px; border-radius: 5px; margin-bottom: 5px; background: rgba(255,255,255,0.1); }
+        .sidebar a:hover, .sidebar a.active { background: #145c35; font-weight: bold; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -29,16 +32,25 @@
             <!-- Sidebar Menu -->
             <div class="col-md-3 sidebar">
                 <h4 class="text-center mb-4">🌱 আজোয়া অয়েল মিলস</h4>
+                
+                <!-- Direct Install Button (Initially Hidden until browser allows) -->
+                <div id="installContainer" class="mb-3 text-center" style="display: none;">
+                    <button id="installBtn" class="btn btn-warning w-100 fw-bold shadow-sm" onclick="installPWA()">
+                        📲 অ্যাপ ইনস্টল করুন
+                    </button>
+                    <hr class="border-light">
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">মাস সিলেক্ট করুন:</label>
                     <input type="month" id="currentMonth" class="form-control" onchange="loadAppData()">
                 </div>
                 <hr>
-                <a href="#" onclick="switchTab('attendance')" class="active" id="tab-attendance">📊 হাজিরা প্যানেল</a>
-                <a href="#" onclick="switchTab('leave-form')" id="tab-leave-form">📝 ছুটির আবেদন ফরম</a>
-                <a href="#" onclick="switchTab('total-leave')" id="tab-total-leave">🏖️ মোট ছুটি</a>
-                <a href="#" onclick="switchTab('total-present')" id="tab-total-present">✅ মোট উপস্থিতি</a>
-                <a href="#" onclick="switchTab('total-absent')" id="tab-total-absent">❌ অনুপস্থিতি</a>
+                <a href="javascript:void(0);" onclick="switchTab('attendance')" class="active" id="tab-attendance">📊 হাজিরা প্যানেল</a>
+                <a href="javascript:void(0);" onclick="switchTab('leave-form')" id="tab-leave-form">📝 ছুটির আবেদন ফরম</a>
+                <a href="javascript:void(0);" onclick="switchTab('total-leave')" id="tab-total-leave">🏖️ মোট ছুটি</a>
+                <a href="javascript:void(0);" onclick="switchTab('total-present')" id="tab-total-present">✅ মোট উপস্থিতি</a>
+                <a href="javascript:void(0);" onclick="switchTab('total-absent')" id="tab-total-absent">❌ অনুপস্থিতি</a>
             </div>
 
             <!-- Main Content Area -->
@@ -47,12 +59,12 @@
                 
                 <!-- Attendance Panel -->
                 <div id="section-attendance" class="content-section">
-                    <div class="card p-4 mb-4">
+                    <div class="card p-4">
                         <h4 class="mb-3">কর্মী ও মোবাইল নম্বর ব্যবস্থাপনা</h4>
                         <div class="input-group mb-3">
-                            <input type="text" id="newEmpName" class="form-control" placeholder="নতুন কর্মীর নাম লিখুন">
-                            <input type="text" id="newEmpMobile" class="form-control" placeholder="মোবাইল নম্বর">
-                            <button class="btn btn-success" onclick="addNewEmployee()">কর্মী যোগ করুন</button>
+                            <input type="text" id="newEmpName" class="form-control" placeholder="কর্মীর নাম">
+                            <input type="text" id="newEmpMobile" class="form-control" placeholder="নম্বর">
+                            <button class="btn btn-success" onclick="addNewEmployee()">যোগ করুন</button>
                         </div>
                     </div>
 
@@ -62,10 +74,9 @@
                             <table class="table table-bordered align-middle">
                                 <thead class="table-success">
                                     <tr>
-                                        <th>কর্মীর নাম</th>
-                                        <th>মোবাইল নম্বর</th>
-                                        <th>সকাল শিফট (ওটি: ইন/আউট, বিল)</th>
-                                        <th>ইভিনিং শিফট (জেনারেল ডিউটি: P/A/L)</th>
+                                        <th>নাম ও নম্বর</th>
+                                        <th>ওটি (ইন/আউট ও বিল)</th>
+                                        <th>স্ট্যাটাস</th>
                                     </tr>
                                 </thead>
                                 <tbody id="attendanceTableBody">
@@ -92,35 +103,35 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">ছুটি শুরুর তারিখ:</label>
+                                    <label class="form-label">শুরুর তারিখ:</label>
                                     <input type="date" id="leaveStart" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">ছুটি শেষ হবার তারিখ:</label>
+                                    <label class="form-label">শেষ তারিখ:</label>
                                     <input type="date" id="leaveEnd" class="form-control" required>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">ছুটি নেওয়ার কারণ:</label>
+                                <label class="form-label">কারণ:</label>
                                 <textarea id="leaveReason" class="form-control" rows="2" required></textarea>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">ছুটি চলাকালীন কোথায় অবস্থান করবেন:</label>
+                                <label class="form-label">অবস্থান:</label>
                                 <input type="text" id="leaveLocation" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">আবেদনকারীর স্বাক্ষর:</label>
+                                <label class="form-label">স্বাক্ষর:</label>
                                 <input type="text" id="leaveSign" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">কর্তৃপক্ষের অনুমোদন:</label>
+                                <label class="form-label">অনুমোদন:</label>
                                 <select id="leaveApproval" class="form-control">
                                     <option value="Pending">অপেক্ষমাণ (Pending)</option>
                                     <option value="Approved">অনুমোদিত (Approved)</option>
                                     <option value="Rejected">প্রত্যাখ্যাত (Rejected)</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-success">আবেদন সাবমিট করুন ও হোয়াটসঅ্যাপে শেয়ার করুন</button>
+                            <button type="submit" class="btn btn-success">সাবমিট করুন ও হোয়াটসঅ্যাপে শেয়ার</button>
                         </form>
                     </div>
                 </div>
@@ -140,6 +151,25 @@
     </div>
 
     <script>
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installContainer').style.display = 'block';
+        });
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                let { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                document.getElementById('installContainer').style.display = 'none';
+            }
+        }
+
         let appData = { employees: [], records: {}, leaves: [] };
 
         document.getElementById('currentMonth').value = new Date().toISOString().slice(0, 7);
@@ -175,41 +205,36 @@
             let monthRecords = (appData.records && appData.records[month]) || {};
 
             appData.employees.forEach((emp, index) => {
-                let empRec = monthRecords[emp.name] || { ot_in: '', ot_out: '', status: 'P' };
+                let empRec = monthRecords[emp.name] || { ot_in: '', ot_out: '', status: 'P', ot_bill: 0 };
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${emp.name}</strong></td>
-                    <td><input type="text" class="form-control form-control-sm" value="${emp.mobile || ''}" onchange="updateMobile(${index}, this.value)"></td>
+                    <td>
+                        <strong>${emp.name}</strong><br>
+                        <small class="text-muted">${emp.mobile || 'নম্বর নেই'}</small>
+                    </td>
                     <td>
                         <div class="input-group input-group-sm mb-1">
-                            <span class="input-group-text">ইন-আউট</span>
                             <input type="time" class="form-control" value="${empRec.ot_in || ''}" onchange="updateRec('${emp.name}', 'ot_in', this.value)">
                             <input type="time" class="form-control" value="${empRec.ot_out || ''}" onchange="updateRec('${emp.name}', 'ot_out', this.value)">
                         </div>
-                        <small class="text-muted">ওটি বিল: <span id="bill-${index}">৳${empRec.ot_bill || 0}</span></small>
+                        <small class="text-success fw-bold">ওটি বিল: ৳<span id="bill-${index}">${empRec.ot_bill || 0}</span></small>
                     </td>
                     <td>
                         <select class="form-select form-select-sm" onchange="updateRec('${emp.name}', 'status', this.value)">
-                            <option value="P" ${empRec.status === 'P' ? 'selected' : ''}>P (উপস্থিত)</option>
-                            <option value="A" ${empRec.status === 'A' ? 'selected' : ''}>A (অনুপস্থিত)</option>
-                            <option value="L" ${empRec.status === 'L' ? 'selected' : ''}>L (ছুটি)</option>
+                            <option value="P" ${empRec.status === 'P' ? 'selected' : ''}>P</option>
+                            <option value="A" ${empRec.status === 'A' ? 'selected' : ''}>A</option>
+                            <option value="L" ${empRec.status === 'L' ? 'selected' : ''}>L</option>
                         </select>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            // Populate leave dropdown
             let leaveSelect = document.getElementById('leaveName');
             leaveSelect.innerHTML = '';
             appData.employees.forEach(emp => {
                 leaveSelect.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
             });
-        }
-
-        function updateMobile(index, val) {
-            appData.employees[index].mobile = val;
-            saveDataToServer('update_employees', { employees: appData.employees });
         }
 
         function updateRec(name, field, val) {
@@ -219,7 +244,6 @@
             
             appData.records[month][name][field] = val;
 
-            // Calculate OT Bill if times change
             let rec = appData.records[month][name];
             if(rec.ot_in && rec.ot_out) {
                 let [h1, m1] = rec.ot_in.split(':').map(Number);
@@ -260,16 +284,12 @@
                 reason: document.getElementById('leaveReason').value,
                 location: document.getElementById('leaveLocation').value,
                 sign: document.getElementById('leaveSign').value,
-                approval: document.getElementById('leaveApproval').value
+                approval: document.getElementById('leaveApproval`
             };
             
             saveDataToServer('save_leave', { leave });
 
-            let text = `📝 *ছুটির আবেদন ফরম* - আজোয়া অয়েল মিলস\n` +
-                       `নাম: ${leave.name}\nমোবাইল: ${leave.mobile}\n` +
-                       `তারিখ: ${leave.start} হতে ${leave.end}\nকারণ: ${leave.reason}\n` +
-                       `অবস্থান: ${leave.location}\nঅনুমোদন: ${leave.approval}`;
-            
+            let text = `📝 *ছুটির আবেদন ফরম* - আজোয়া অয়েল মিলস\nনাম: ${leave.name}\nমোবাইল: ${leave.mobile}\nতারিখ: ${leave.start} হতে ${leave.end}\nকারণ: ${leave.reason}\nঅবস্থান: ${leave.location}\nঅনুমোদন: ${leave.approval}`;
             let whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
         }
